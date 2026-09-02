@@ -1,0 +1,21 @@
+# 虚拟环境
+.venv/
+
+# Python 缓存
+__pycache__/
+*.pyc
+
+# 系统文件
+.DS_Store
+
+# IDE
+.idea/
+
+# 原始数据与大体积中间产物（均可由 scripts/ 重新生成）
+data/
+
+# 脚本运行产物（均可由 scripts/ 重新生成）
+outputs/
+
+# 其他
+*.log
