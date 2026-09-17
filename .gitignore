@@ -17,5 +17,8 @@ data/
 # 脚本运行产物（均可由 scripts/ 重新生成）
 outputs/
 
+# 运行缓存（验证集预测、Bootstrap 结果等，不进交付包）
+.cache/
+
 # 其他
 *.log

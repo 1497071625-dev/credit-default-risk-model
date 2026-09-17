@@ -43,6 +43,7 @@ md("""# 信贷违约预测 · 完整项目流程（main_pipeline）
 | 4 模型构建与评估 | 三模型对比、多指标 | model_training.py |
 | 5 模型优化 | 随机搜索、K 折、集成、SHAP | model_optimization.py |
 | 6 最终评估 | 测试集成绩单、泛化、阈值选择 | model_final_eval.py |
+| 6b 校准与决策 | 概率校准、期望损失框架 | probability_calibration.py / expected_loss_framework.py |
 | 7 业务结论 | 阈值解读、给业务方的话 | 最终项目报告 |
 
 **怎么用**：默认快速路径——读取 data/ 与 outputs/ 已有产物，全程约 3–5 分钟；每个阶段末尾标注了完整重跑脚本（耗时更长，但可复现每一步）。
@@ -165,6 +166,30 @@ imp.head(10)
 code("""display(Image(str(OUT / "W2" / "feature_importance.png"), width=720))
 """)
 
+md("""### 3.5 延伸实验：38 个特征都用得上吗？（W4）
+
+特征选择解决了"该不该留"，业务方还会问：**38 个是不是都得采集？少放几个会掉多少？**
+做法：按 W2 随机森林重要性从高到低排序，依次只喂前 N 个特征、重训同一个 LGB，
+比较验证集 AUC。**本实验只看训练集与验证集，测试集全程不参与。**
+
+> 完整重跑：`.venv/bin/python scripts/W4/feature_count_auc.py`（9 档特征各训一次，约 40 秒）""")
+
+code("""# 特征数量 vs 验证集 AUC
+fc = pd.read_csv(OUT / "W4" / "feature_count_auc.csv")
+display(fc[["n_features", "train_auc", "val_auc", "seconds"]].rename(columns={
+    "n_features": "使用特征数", "train_auc": "训练集 AUC",
+    "val_auc": "验证集 AUC", "seconds": "训练秒数"}))
+display(Image(str(OUT / "W4" / "feature_count_auc.png"), width=760))
+""")
+
+md("""**结论**：3 个特征（子等级、利率、等级）就拿到满血性能的 96%——机构自己的风险判断最值钱；
+20 个到 99.4%；**25 个之后饱和**（25→30 一点没涨，25→38 只 +0.0010）。
+训练分一路涨（0.697→0.743）、验证分早早走平，说明后面的特征更多在帮模型"背训练集"。
+
+**业务含义**：最终保留 38 个（数据已在手，不增加线上成本）；但若将来要精简采集口径，
+砍到 Top 20–25 个、AUC 损失不到 0.005，是有数字支撑的方案。这也顺带回答了"为什么不做 RFE"——
+RFE 想找的"最优特征数"，几条曲线就够回答，成本只要几十秒。""")
+
 md("""## 4. 模型构建与评估（W2）
 
 **数据集划分（4.1）**：训练 70% / 验证 20% / 测试 10%，按目标变量分层，保证三集违约率都约 20%。
@@ -238,6 +263,35 @@ for f in ["confusion_matrix_test.png", "roc_curve_test.png",
     display(Image(str(OUT / "W4" / f), width=720))
 """)
 
+code("""# 概率校准：把"分数"变成能直接算钱的"真实概率"
+cal = pd.read_csv(OUT / "W4" / "calibration_compare.csv")
+display(cal[["stage", "brier", "auc", "mean_pred", "share_ge_0.5"]].round(4))
+display(Image(str(OUT / "W4" / "calibration_curve.png"), width=720))
+""")
+
+md("""**为什么要校准**：模型原始概率排序很准，但数值整体虚高——平均说 45%，实际违约率只有 20%（虚高 125%）。
+直接拿它算"期望损失 = 概率 × 金额 × (1−回收率)"会高估损失，把该放的好客户也拒掉。
+校准后平均概率 0.1993 ≈ 实际 0.1995，Brier 从 0.2106 降到 0.1424，而 **AUC 不变**（0.7249）——
+校准只动"数值大小"，不动"谁排前面"。方法在验证集内部对半选出：Isotonic 与 Platt 差万分之几，取更平滑的 Platt。""")
+
+code("""# 期望损失框架：每笔贷款按自己的账算，而不是全员一刀切
+el = pd.read_csv(OUT / "W4" / "expected_loss_summary.csv")
+display(el[["策略", "被拒占比", "拦截率(真违约被拒占比)",
+            "被拒者精确率(里面真违约占比)", "总期望利润(万元)", "说明"]].round(4))
+display(Image(str(OUT / "W4" / "expected_loss_sensitivity.png"), width=760))
+""")
+
+md("""**公式**：每 1 元贷款的期望利润 = (1−p) × 净收益率 × 期限 − p × (1−回收率)，期望利润 > 0 才批准。
+等价于逐笔隐含阈值 `p* = 净收益率×期限 / (净收益率×期限 + 1−回收率)`——金额大、利率高、期限长的贷款
+赚得多，能容忍更高的违约概率；利差薄的贷款则要更严。
+
+**三条读数**：① 用未校准概率算账会拒掉 87.7% 的申请（模型被自己吓到），**校准是前提**；
+② 中性口径（净息差 6%、回收率 30%）下，拒绝率 35.2% 反而低于固定阈值的 41.4%，
+但总期望利润从 6,155 万升到 6,611 万——**少拒还多赚**；
+③ 收益口径比回收率敏感得多（净息差 3%→9%，拒绝率在 65% 与 18% 之间摆动），
+所以讨论阈值之前先和财务敲定口径。净收益率与回收率是**演示参数**（数据集里没有），
+金额、期限、利率、是否违约才来自数据本身——本页交付的是**方法**，不是利润结论。""")
+
 code("""# 活代码复现：用最终参数重训 LightGBM，验证测试集指标与成绩单一致（约 30 秒）
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (accuracy_score, precision_score, recall_score,
@@ -270,7 +324,8 @@ md("""## 7. 业务结论与交付
 - 阈值 0.5（默认平衡档）：拒绝约 41% 的申请，拦下 67.5% 的违约者，误伤约 35% 的正常客户
 - 阈值 0.3（宽进）：拦下 92.3% 违约者，但误伤翻倍，适合获客扩张期
 - 阈值 0.7（严审）：精确率 47.4%（误伤少），但漏掉约 74% 违约者，适合风险收缩期
-- **最终选择**：需结合坏账损失与放贷收益测算（当前数据无法精确测算，报告中给出框架与演示参数）
+- **更进一步的算法**：固定阈值是「一刀切」，更贴合业务的是**期望损失框架**——按每笔贷款的金额、利率、期限算出自己的审批线（见第 6 节）。中性口径下它拒绝率更低（35.2% vs 41.4%）
+- **最终选择**：算法给定档位，最终数字要由机构用真实回收率与资金成本敲定；报告中给出了完整框架与敏感性分析，参数本身是演示值
 
 ### 给业务方的话
 1. 模型在从未见过的测试集上 AUC 0.7249，训练/验证/测试差距小，**没有过拟合**，可稳定推广到新客户
@@ -279,16 +334,20 @@ md("""## 7. 业务结论与交付
 4. 局限：数据集字段有限（部分匿名/脱敏），AUC 0.72 属同数据规模下的合理水平；提升需接入征信局数据、还款行为序列特征
 """)
 
-code("""# 业务仪表板（阈值模拟器所在页面）
+code("""# 业务仪表板（5 个页签）
 print("运行仪表板：streamlit run scripts/W4/app_dashboard.py")
-print("页面：① 数据概览（EDA） ② 模型表现 ③ 阈值模拟器（滑块实时看精确率/召回率/拒绝占比）")
+print("页面：① 数据概览（EDA）")
+print("      ② 模型表现（成绩单/泛化/ROC/PR/学习曲线/特征数量曲线）")
+print("      ③ 阈值模拟器（滑块实时看精确率/召回率/拒绝占比 + 金额账）")
+print("      ④ 概率校准（概率虚高多少、校准后贴合度）")
+print("      ⑤ 期望损失框架（策略对比 + 敏感性）")
 """)
 
 md("""### 交付清单对照
-- **代码**：`data_preprocessing.py`（W1）｜`feature_engineering.py`、`model_training.py`（W2）｜`model_optimization.py`（W3）｜`model_final_eval.py`、`learning_curve.py`、`app_dashboard.py`（W4）｜本 Notebook（main_pipeline）
+- **代码**：`data_preprocessing.py`（W1）｜`feature_engineering.py`、`model_training.py`（W2）｜`model_optimization.py`（W3）｜`model_final_eval.py`、`learning_curve.py`、`prepare_test_predictions.py`、`probability_calibration.py`、`expected_loss_framework.py`、`feature_count_auc.py`、`app_dashboard.py`（W4）｜本 Notebook（main_pipeline）
 - **报告**：数据探索报告 / 特征工程报告 / 模型评估报告 / 模型优化报告 / 最终项目报告（`reports/`）
-- **可视化**：EDA 图（W1）、特征重要性（W2）、ROC/PR/混淆矩阵/学习曲线（W2/W4）、SHAP（W3）、Streamlit 仪表板（W4）
-- **文档**：`README.md`、`requirements.txt`、`presentation.pptx`（待生成）
+- **可视化**：EDA 图（W1）、特征重要性（W2）、ROC/PR/混淆矩阵/学习曲线（W2/W4）、SHAP（W3）、校准曲线与期望损失敏感性（W4）、Streamlit 仪表板（W4，5 页签）
+- **文档**：`README.md`、`requirements.txt`、`presentation.pptx`（15 页）
 """)
 
 nb["cells"] = cells

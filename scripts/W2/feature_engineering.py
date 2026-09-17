@@ -24,7 +24,7 @@ plt.rcParams["axes.unicode_minus"] = False
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 
-# 向上查找含 data/ 的目录作为项目根（脚本放 scripts/ 或 scripts/W2/ 均可运行）
+# 向上查找含 data/ 的目录作为项目根
 BASE_DIR = next(
     (p for p in [Path(__file__).resolve().parent, *Path(__file__).resolve().parents]
      if (p / "data").is_dir()),

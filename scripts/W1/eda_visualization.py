@@ -2,7 +2,7 @@
 eda_visualization.py - 探索性数据分析与可视化
 项目：信贷违约预测模型（W1 交付物）
 输入：data/train_clean.csv（清洗后数据）
-输出：outputs/W1/eda_*.png（英文标签，报告配中文说明）
+输出：outputs/W1/eda_*.png
 """
 from pathlib import Path
 import matplotlib
@@ -13,7 +13,7 @@ plt.rcParams["axes.unicode_minus"] = False
 import pandas as pd
 import seaborn as sns
 
-# 向上查找含 data/ 的目录作为项目根（脚本放 scripts/ 或 scripts/W1/ 均可运行）
+# 向上查找含 data/ 的目录作为项目根
 BASE_DIR = next(
     (p for p in [Path(__file__).resolve().parent, *Path(__file__).resolve().parents]
      if (p / "data").is_dir()),

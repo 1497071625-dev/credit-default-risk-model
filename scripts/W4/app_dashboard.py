@@ -3,6 +3,7 @@ app_dashboard.py - 业务仪表板（W4 交付物，阶段 6）
 项目：信贷违约预测模型
 运行：streamlit run scripts/W4/app_dashboard.py
 页面：1) 数据概览  2) 模型表现  3) 阈值模拟器（业务交互核心）
+      4) 概率校准（W4）  5) 期望损失框架（W4）
 
 复用已有产物：
   图：outputs/W1/*.png（EDA）、outputs/W2/*.png（特征重要性）、
@@ -48,17 +49,38 @@ def load_predictions():
 def load_threshold_table():
     return pd.read_csv(OUT / "W4" / "threshold_table.csv")
 
+@st.cache_data
+def load_calibration_compare():
+    return pd.read_csv(OUT / "W4" / "calibration_compare.csv")
+
+@st.cache_data
+def load_calibration_bins():
+    return pd.read_csv(OUT / "W4" / "calibration_bins.csv")
+
+@st.cache_data
+def load_expected_loss():
+    return pd.read_csv(OUT / "W4" / "expected_loss_summary.csv")
+
+@st.cache_data
+def load_feature_count():
+    return pd.read_csv(OUT / "W4" / "feature_count_auc.csv")
+
 metrics = load_metrics()
 gen_df = load_generalization()
 cmp_df = load_model_compare()
 pred = load_predictions()
 thr_df = load_threshold_table()
+cal_df = load_calibration_compare()
+cal_bins = load_calibration_bins()
+el_df = load_expected_loss()
+fc_df = load_feature_count()
 
 st.title("信贷违约预测 · 业务仪表板")
 st.caption("阿里线上数据分析实习项目 | 基于 LightGBM 的信贷违约预测模型")
 
-tab_overview, tab_model, tab_threshold = st.tabs(
-    ["① 数据概览", "② 模型表现", "③ 阈值模拟器"])
+tab_overview, tab_model, tab_threshold, tab_calib, tab_el = st.tabs(
+    ["① 数据概览", "② 模型表现", "③ 阈值模拟器",
+     "④ 概率校准", "⑤ 期望损失框架"])
 
 # ============================================================
 # 页签 1：数据概览
@@ -148,6 +170,29 @@ with tab_model:
     st.subheader("模型对比（验证集）")
     st.dataframe(cmp_df, width="stretch")
     st.caption("LGB(优化) 与 Stacking 几乎持平，但更可解释、易部署，故选为最终模型。")
+
+    st.subheader("38 个特征都用得上吗？（W4 特征数量实验）")
+    st.markdown(
+        "按随机森林重要性从高到低，依次只喂前 N 个特征重训同一个 LGB，看验证集 AUC 怎么变。"
+        "**注意：本实验只看训练集与验证集，测试集未参与。**")
+    fc_show = fc_df.rename(columns={
+        "n_features": "使用特征数", "train_auc": "训练集 AUC",
+        "val_auc": "验证集 AUC", "seconds": "训练秒数", "added": "本档新增特征"})
+    st.dataframe(fc_show[["使用特征数", "训练集 AUC", "验证集 AUC", "训练秒数"]],
+                 width="stretch", hide_index=True)
+    col_fc1, col_fc2 = st.columns([3, 2])
+    with col_fc1:
+        st.image(str(OUT / "W4" / "feature_count_auc.png"),
+                 caption="验证 AUC 在第 20–25 个特征后基本走平", width="stretch")
+    with col_fc2:
+        st.markdown(
+            "**怎么读**\n\n"
+            "- 只用 **3 个特征**（子等级、利率、等级）就拿到满血性能的 **96%**\n"
+            "- **20 个特征**到 99.4%；补齐剩下 18 个只多 **+0.0041**\n"
+            "- **25 个之后饱和**：25→30 一点没涨\n"
+            "- 训练分一路涨、验证分早早走平 → 后面的特征更多在帮模型背训练集\n\n"
+            "**业务含义**：最终保留 38 个（数据已在手，不增加线上成本）；"
+            "若将来要精简采集口径，砍到 20–25 个、AUC 损失不到 0.005。")
 
 # ============================================================
 # 页签 3：阈值模拟器（业务核心）
@@ -297,3 +342,128 @@ with tab_threshold:
         f"金额账（演示参数下）：避免坏账 **{avoided/1e8:.2f} 亿**、放弃收入 "
         f"**{foregone/1e8:.2f} 亿**，演示最优阈值约 **{best_th:.2f}**。"
         f"最终阈值建议由业务结合真实坏账/资金成本数据确定。")
+
+
+# ============================================================
+# 页签 4：概率校准（W4）
+# ============================================================
+with tab_calib:
+    st.header("概率校准：让「概率」能直接算钱")
+    st.markdown(
+        "模型输出的原始概率是**排序用**的——谁比谁风险高，它排得很准；"
+        "但「45% 违约概率」这个数值本身**偏大**，不能直接拿去乘金额算期望损失。"
+        "校准就是把分数重新映射成**真实的违约率**，让「说 20% 就真的违约 20%」。")
+
+    raw = cal_df[cal_df["stage"] == "raw(test)"].iloc[0]
+    platt = cal_df[cal_df["stage"] == "platt(test)"].iloc[0]
+    iso = cal_df[cal_df["stage"] == "isotonic(test)"].iloc[0]
+    actual = cal_df[cal_df["stage"] == "actual(test)"].iloc[0]
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("校准前平均预测概率", f"{raw['mean_pred']:.4f}",
+              delta=f"比实际高 {(raw['mean_pred']/actual['mean_pred']-1)*100:.0f}%",
+              delta_color="inverse")
+    c2.metric("校准后平均预测概率", f"{platt['mean_pred']:.4f}")
+    c3.metric("测试集实际违约率", f"{actual['mean_pred']:.4f}")
+    c4.metric("Brier 分数（越小越好）", f"{platt['brier']:.4f}",
+              delta=f"{platt['brier']-raw['brier']:.4f} vs 校准前", delta_color="normal")
+
+    st.subheader("校准前后对比（都在测试集上）")
+    show = pd.DataFrame({
+        "版本": ["校准前（原始概率）", "校准后（Platt）", "校准后（Isotonic，对照）", "实际违约率"],
+        "平均预测概率": [f"{raw['mean_pred']:.4f}", f"{platt['mean_pred']:.4f}",
+                   f"{iso['mean_pred']:.4f}", f"{actual['mean_pred']:.4f}"],
+        "≥0.5 的占比": [f"{raw['share_ge_0.5']*100:.1f}%", f"{platt['share_ge_0.5']*100:.1f}%",
+                    f"{iso['share_ge_0.5']*100:.1f}%", "—"],
+        "Brier（越小越好）": [f"{raw['brier']:.4f}", f"{platt['brier']:.4f}",
+                         f"{iso['brier']:.4f}", "—"],
+        "AUC（排序能力）": [f"{raw['auc']:.4f}", f"{platt['auc']:.4f}",
+                       f"{iso['auc']:.4f}", "—"],
+    })
+    st.dataframe(show, width="stretch", hide_index=True)
+    st.caption(
+        "三件事值得注意：① 平均概率从 0.4495 降到 0.1993，和实际的 0.1995 几乎相等；"
+        "② Brier 从 0.2106 降到 0.1424（大幅改善）；"
+        "③ AUC 一点没变（0.7249）——校准只动「数值大小」，不动「谁排前面」。")
+
+    col_cal1, col_cal2 = st.columns([1, 1])
+    with col_cal1:
+        st.image(str(OUT / "W4" / "calibration_curve.png"),
+                 caption="可靠性曲线：点贴住对角线 = 说多少就真发生多少", width="stretch")
+    with col_cal2:
+        st.markdown("**Why：为什么非要校准？**")
+        st.markdown(
+            "- **概率虚高 125%**：模型平均说 45%，实际只有 20%。直接拿这个概率去算"
+            "「期望损失 = 概率 × 金额 × (1−回收率)」，会**高估损失**，"
+            "把本来该放的好客户也拒掉。\n"
+            "- **阈值会失真**：明明 0.5 是「一半一半」的分界，但由于概率整体虚高，"
+            "实际拒掉了 41% 的申请——不是业务选的，是概率标度失真带来的副作用。\n"
+            "- **校准不牺牲排序**：AUC 保持不变，说明「谁更危险」的信息一点没丢，"
+            "只是把刻度重新对准了真实概率。")
+        st.info(
+            "**方法怎么选的**：在验证集内部对半再切一刀，一半训练校准器、一半比较效果——"
+            f"Isotonic {iso['brier']:.5f} vs Platt {platt['brier']:.5f}，"
+            "差别在万分之几，Platt 更平滑、参数更少、外推更稳，故采用 **Platt**。")
+
+    st.subheader("分箱对照：每个分数段说多少、实际多少")
+    bins_show = cal_bins.rename(columns={
+        "bin": "分数段", "count": "人数", "mean_pred_raw": "校准前平均概率",
+        "mean_pred_cal": "校准后平均概率", "actual_rate": "实际违约率"})
+    bins_show["分数段"] = [f"第 {i+1} 段（低→高）" for i in range(len(bins_show))]
+    st.dataframe(bins_show, width="stretch", hide_index=True)
+    st.line_chart(bins_show.set_index("分数段")[["校准前平均概率", "校准后平均概率", "实际违约率"]],
+                  height=280)
+    st.caption("校准后那条线和实际违约率几乎重合；校准前那条线整体偏高——这就是「概率虚高」长什么样。")
+
+
+# ============================================================
+# 页签 5：期望损失框架（W4）
+# ============================================================
+with tab_el:
+    st.header("期望损失框架：从「拍一条线」到「按笔算账」")
+    st.markdown(
+        "固定阈值（0.5）把所有客户用同一把尺子切，但一笔贷款值不值得放，不只看违约概率——"
+        "金额大、利率高、期限长的贷款赚得多，能容忍更高的违约概率；利差薄的贷款则要更严。"
+        "把这几件事合成一笔账，用的是**第 ④ 页校准后的概率**（否则概率虚高、账会算错）：")
+
+    st.latex(r"\text{每 1 元贷款的期望利润} = (1-p)\times \text{净收益率}\times \text{期限} - p \times (1-\text{回收率})")
+    st.markdown(
+        "**决策规则**：期望利润 > 0 → 批准；≤ 0 → 拒绝。"
+        "换算成逐笔的隐含阈值：`p* = 净收益率 × 期限 / (净收益率 × 期限 + 1 − 回收率)`。"
+        "也就是说，每笔贷款根据自己的金额、利率、期限，自动得到一条自己的审批线。")
+
+    st.subheader("策略对比（统一按中性口径评价）")
+    el_show = el_df.copy()
+    el_show["被拒占比"] = el_show["被拒占比"].map(lambda x: f"{x*100:.1f}%")
+    el_show["拦截率(真违约被拒占比)"] = el_show["拦截率(真违约被拒占比)"].map(
+        lambda x: f"{x*100:.1f}%" if pd.notna(x) else "—")
+    el_show["被拒者精确率(里面真违约占比)"] = el_show["被拒者精确率(里面真违约占比)"].map(
+        lambda x: f"{x*100:.1f}%" if pd.notna(x) else "—")
+    el_show["总期望利润(万元)"] = el_show["总期望利润(万元)"].map(lambda x: f"{x:,.0f}")
+    st.dataframe(el_show[["策略", "被拒占比", "拦截率(真违约被拒占比)",
+                          "被拒者精确率(里面真违约占比)", "总期望利润(万元)", "说明"]],
+                 width="stretch", hide_index=True)
+
+    col_el1, col_el2 = st.columns([3, 2])
+    with col_el1:
+        st.image(str(OUT / "W4" / "expected_loss_sensitivity.png"),
+                 caption="敏感性：收益口径 / 回收率一变，拒绝率跟着变（口径才是最大变量）",
+                 width="stretch")
+    with col_el2:
+        st.markdown("**四条结论**")
+        st.markdown(
+            "1. **校准是前提**：拿未校准概率去算账，会拒掉 **87.7%** 的申请"
+            "（模型自己都被吓到了）——同一套公式，只因为概率标度错了，结果完全不可用。\n"
+            "2. **中性口径下比固定阈值更优**：拒绝率从 41.4% 降到 **35.2%**（少拒 6 个百分点），"
+            "但总期望利润从 6,155 万升到 **6,611 万**——**少拒还多赚**，"
+            "因为每笔账是分开算的，不必一刀切。\n"
+            "3. **口径才是最大敏感源**：净息差从 3% 变到 9%，拒绝率在 65% 和 18% 之间摆动，"
+            "比回收率的拉动大得多。讨论阈值之前，先和财务把口径敲定。\n"
+            "4. **诚实边界**：净收益率、回收率都是**演示参数**，数据集里没有；"
+            "金额、期限、利率、是否违约才是数据里真实的值。"
+            "上线前必须用机构真实口径替换，本页只交付**方法**，不是利润结论。")
+
+    st.warning(
+        "**一句话给业务方**：模型负责把风险排序，最终「放不放」要按每笔贷款的"
+        "期望利润来定——收益高、期限长的客户可以放松一点，利差薄的客户要更严。"
+        "但这条线的位置，取决于机构自己的资金成本和催收回收能力。")

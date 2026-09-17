@@ -10,7 +10,7 @@
 Ali-DA/
 ├── data/         原始数据与各阶段产物（train_clean → encoded → scaled → final）
 ├── notebooks/    main_pipeline.ipynb：一键复现全流程（W1–W4）
-├── outputs/      脚本产物（W1 清洗与 EDA / W2 特征与基线 / W3 优化与 SHAP / W4 最终评估）
+├── outputs/      脚本产物（W1 清洗与 EDA / W2 特征与基线 / W3 优化与 SHAP / W4 最终评估与汇报 PPT）
 ├── reports/      项目文档（环境配置、数据探索、特征工程、模型评估、模型优化、最终报告、周报）
 ├── scripts/      可执行脚本（scripts/W1–W4，按下文顺序运行）
 ├── README.md     本文件
@@ -65,17 +65,38 @@ Notebook 优先读取各阶段已生成的中间产物（快路径，约 1 分�
 # ⑤ 三模型基线训练与评估（W2）→ outputs/W2/model_comparison.csv、roc_curves.png、pr_curves.png、confusion_matrix_xgb.png
 .venv/bin/python scripts/W2/model_training.py
 
-# ⑥ 模型优化（W3：随机搜索调参、K 折交叉验证、投票/堆叠集成、SHAP）→ outputs/W3/
+# ⑥ 特征相关性与共线性分析（W2，对应《特征工程报告》第 7 节）→ outputs/W2/correlation_heatmap.png、correlation_top15.png
+.venv/bin/python scripts/W2/correlation_analysis.py
+
+# ⑦ 模型优化（W3：随机搜索调参、K 折交叉验证、投票/堆叠集成、SHAP）→ outputs/W3/
 .venv/bin/python scripts/W3/model_optimization.py
 
-# ⑦ 最终模型测试集评估（W4）→ outputs/W4/model_final_metrics.csv、generalization_compare.csv、threshold_table.csv、ROC/PR/混淆矩阵图
+# ⑦-补 优化结果配图（W3，不训练模型，秒出图）→ outputs/W3/random_search_auc.png、model_comparison_optimized.png
+.venv/bin/python scripts/W3/optimization_plots.py
+
+# ⑦-补2 调参方法对比（W3，网格/随机/贝叶斯 TPE 等预算对照，约 22 分钟；末尾加 --from-cache 可跳过训练直接重画图）
+.venv/bin/python scripts/W3/tuning_method_compare.py
+
+# ⑦-补3 模型差异显著性检验（W3，DeLong + Bootstrap 1000 次；首次运行需重新训练七个模型并缓存）
+.venv/bin/python scripts/W3/model_significance_test.py
+
+# ⑧ 最终模型测试集评估（W4）→ outputs/W4/model_final_metrics.csv、generalization_compare.csv、threshold_table.csv、ROC/PR/混淆矩阵图
 .venv/bin/python scripts/W4/model_final_eval.py
 
-# ⑧ 学习曲线（W4）→ outputs/W4/learning_curve.png
+# ⑨ 学习曲线（W4）→ outputs/W4/learning_curve.png
 .venv/bin/python scripts/W4/learning_curve.py
 
-# ⑨ 生成测试集预测概率（W4，仪表板数据源）→ outputs/W4/test_predictions.csv
+# ⑩ 生成测试集预测概率（W4，仪表板数据源）→ outputs/W4/test_predictions.csv
 .venv/bin/python scripts/W4/prepare_test_predictions.py
+
+# ⑪ 概率校准（W4）→ outputs/W4/calibration_compare.csv、calibration_bins.csv、calibration_curve.png、test_predictions_calibrated.csv
+.venv/bin/python scripts/W4/probability_calibration.py
+
+# ⑫ 特征数量 vs AUC（W4）→ outputs/W4/feature_count_auc.csv、feature_count_auc.png
+.venv/bin/python scripts/W4/feature_count_auc.py
+
+# ⑬ 期望损失决策框架与敏感性（W4）→ outputs/W4/expected_loss_summary.csv、expected_loss_sensitivity.csv、expected_loss_sensitivity.png
+.venv/bin/python scripts/W4/expected_loss_framework.py
 ```
 
 ## 交互仪表板
@@ -91,8 +112,9 @@ Notebook 优先读取各阶段已生成的中间产物（快路径，约 1 分�
 ## 文档
 
 - `reports/环境配置.md`：环境与依赖配置说明
-- `reports/数据探索报告.md`：数据质量检查、清洗策略、EDA 发现
+- `reports/数据探索+EDA可视化报告.md`：数据质量检查、清洗策略、EDA 发现
 - `reports/特征工程报告.md`：特征编码 / 变换 / 创建 / 选择决策及防泄漏说明
 - `reports/模型评估报告.md`：三模型基线对比与业务解读
 - `reports/模型优化报告.md`：调参、K 折交叉验证、投票/堆叠集成与 SHAP 解释
 - `reports/最终项目报告.md`：完整项目总结（含业务建议、风险阈值选择、局限性）
+- `outputs/W4/presentation.pptx`：项目汇报演示文稿（15 页，含背景 / EDA / 特征 / 建模优化 / SHAP / 最终评估与业务建议，可直接用 PowerPoint、Keynote 打开编辑）

@@ -1,7 +1,7 @@
 """
 model_training.py - 模型训练与评估（W2 交付物，阶段 4）
 项目：信贷违约预测模型
-输入：data/train_final.csv（特征工程最终产物）
+输入：data/train_final.csv（特征工程产物）
 输出：outputs/W2/model_comparison.csv（验证集性能对比表）
 
 流程（对应项目任务 4.1-4.4）：

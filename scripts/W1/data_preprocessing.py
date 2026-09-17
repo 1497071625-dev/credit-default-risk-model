@@ -23,7 +23,7 @@ plt.rcParams["axes.unicode_minus"] = False
 import numpy as np
 import pandas as pd
 
-# 向上查找含 data/ 的目录作为项目根（脚本放 scripts/ 或 scripts/W1/ 均可运行）
+# 向上查找含 data/ 的目录作为项目根
 BASE_DIR = next(
     (p for p in [Path(__file__).resolve().parent, *Path(__file__).resolve().parents]
      if (p / "data").is_dir()),
@@ -140,8 +140,22 @@ def detect_outliers(df: pd.DataFrame):
     plt.close(fig)
     log(f"\n长尾分布图已保存: {OUT / 'outlier_tail.png'}")
 
-    # [7] 汇总
-    log("\n[7] 汇总：建议处理策略（Step 2 清洗依据此结论执行）")
+    # [7] installment 跨列公式验算（等额本息：由本金/利率/期限反算理论月供）
+    log("\n[7] installment 跨列公式验算（等额本息）")
+    loan = df["loanAmnt"].to_numpy(dtype=float)
+    rate = df["interestRate"].to_numpy(dtype=float) / 100.0 / 12.0
+    term_n = df["term"].to_numpy(dtype=float) * 12.0
+    inst = df["installment"].to_numpy(dtype=float)
+    theo = loan * rate * (1.0 + rate) ** term_n / ((1.0 + rate) ** term_n - 1.0)
+    rel = np.abs(inst - theo) / theo
+    n_ok = int((rel < 0.0001).sum())
+    n_bad = int((rel > 0.01).sum())
+    log(f"  与理论月供误差<0.01%（视为一致）: {n_ok:,} 行（{n_ok / len(df) * 100:.2f}%）")
+    log(f"  误差>1% 的行: {n_bad:,} 行（{n_bad / len(df) * 100:.3f}%），方向系统性偏低（实际月供<理论值）")
+    log("  判定: 方向一致的偏低不像随机录入错误（疑似利率调整/特殊产品），不构成批量脏数据，保留")
+
+    # [8] 汇总
+    log("\n[8] 汇总：建议处理策略（Step 2 清洗依据此结论执行）")
     log("  annualIncome<=0  -> 视为缺失并填充")
     log("  dti 越界         -> 删除行")
     log("  revolUtil>100    -> 封顶到 100")

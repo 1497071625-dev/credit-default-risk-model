@@ -15,7 +15,7 @@ plt.rcParams["font.sans-serif"] = ["PingFang SC", "Hiragino Sans GB", "Songti SC
 plt.rcParams["axes.unicode_minus"] = False
 import pandas as pd
 
-# 向上查找含 data/ 的目录作为项目根（脚本放 scripts/ 或 scripts/W1/ 均可运行）
+# 向上查找含 data/ 的目录作为项目根
 BASE_DIR = next(
     (p for p in [Path(__file__).resolve().parent, *Path(__file__).resolve().parents]
      if (p / "data").is_dir()),
