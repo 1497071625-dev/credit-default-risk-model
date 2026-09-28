@@ -20,7 +20,7 @@ credit-default-risk-model/
 ├── data/         原始数据与清洗、特征工程产物（体积大，未入库，按「数据集」一节自行下载）
 ├── notebooks/    main_pipeline.ipynb：一键复现全流程（W1–W4，读出产物，几分钟跑完）
 ├── outputs/      脚本产物（W1 清洗与 EDA / W2 特征与基线 / W3 优化与 SHAP / W4 最终评估、决策分析、仪表板）
-├── reports/      项目文档（环境配置、数据探索、特征工程、模型评估、模型优化、最终报告，以及 W1–W4 周报；仓库留 md 源稿，docx 交付版在交付包里）
+├── reports/W1–W4/ 各周文档（按周分目录：专题报告 + 周报；仓库留 md 源稿，docx 交付版在交付包里）
 ├── scripts/      可执行脚本（scripts/W1–W4，按下文顺序运行）
 ├── README.md     本文件
 └── requirements.txt
@@ -45,7 +45,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-macOS 下若 `import xgboost` 报错，需先安装 OpenMP 运行时：`brew install libomp`（详见 `reports/环境配置.md`）。
+macOS 下若 `import xgboost` 报错，需先安装 OpenMP 运行时：`brew install libomp`（详见 `reports/W1/环境配置.md`）。
 
 ## 快速复现（推荐）
 
@@ -164,8 +164,8 @@ Notebook 优先读取各阶段已生成的中间产物（快路径，约 1 分�
 
 | 交付物 | 文件 | 要求 |
 |---|---|---|
-| 最终项目报告 | `reports/最终项目报告.md`（交付版 docx 同名） | 10–15 页，含业务建议（放贷线与差异化定价）与 4 张图（实测 14 页） |
-| W4 周报 | `reports/W4_周报_2026-09-27.md`（交付版 docx 同名） | 详细总结版，含 4 张图（放贷方案①② 各一节），单独发 |
+| 最终项目报告 | `reports/W4/最终项目报告.md`（交付版 docx、pdf 同名） | 10–15 页，含业务建议（放贷线与差异化定价）与 4 张图 |
+| W4 周报 | `reports/W4/W4_周报_2026-09-27.md`（交付版 docx 同名） | 详细总结版，含 4 张图（放贷方案①② 各一节），单独发 |
 | 业务仪表板 | `outputs/W4/dashboard.html`（离线单文件）｜`scripts/W4/app_dashboard.py`（Streamlit） | Plotly/Dash 或 Streamlit |
 | 项目汇报演示 | `outputs/W4/信贷违约模型与审批线_W4汇报.pdf`（可编辑 pptx 在交付包） | presentation.pptx，10–15 页 |
 | 代码 | `scripts/W1–W4/` + `notebooks/main_pipeline.ipynb` | 五个规定脚本 + 全流程 Notebook |
@@ -173,11 +173,16 @@ Notebook 优先读取各阶段已生成的中间产物（快路径，约 1 分�
 
 ## 文档
 
-- `reports/环境配置.md`：环境与依赖配置说明
-- `reports/数据探索+EDA可视化报告.md`：数据质量检查、清洗策略、EDA 发现
-- `reports/特征工程报告.md`：特征编码 / 变换 / 创建 / 选择决策及防泄漏说明
-- `reports/模型评估报告.md`：三模型基线对比与业务解读
-- `reports/模型优化报告.md`：调参、K 折交叉验证、投票/堆叠集成与 SHAP 解释
-- `reports/最终项目报告.md`：完整项目总结（含头部区分度、时间外验证、风险阈值与定价、人工复审带、局限性；含 4 张图，导出 15 页）
-- 周报：`reports/W1_周报_2026-09-07.md`、`W2_周报_2026-09-14.md`、`W3_周报_2026-09-21.md`、`W4_周报_2026-09-27.md`
+文档按四周分目录放在 `reports/W1`–`reports/W4`；仓库里是 md 源稿，交付包里是内容一致的同名 docx：
+
+- `reports/W1/环境配置.md`：环境与依赖配置说明
+- `reports/W1/数据探索+EDA可视化报告.md`：数据质量检查、清洗策略、EDA 发现
+- `reports/W1/W1_周报_2026-09-07.md`：W1 周报
+- `reports/W2/特征工程报告.md`：特征编码 / 变换 / 创建 / 选择决策及防泄漏说明
+- `reports/W2/模型评估报告.md`：三模型基线对比与业务解读
+- `reports/W2/W2_周报_2026-09-14.md`：W2 周报
+- `reports/W3/模型优化报告.md`：调参、K 折交叉验证、投票/堆叠集成与 SHAP 解释
+- `reports/W3/W3_周报_2026-09-21.md`：W3 周报
+- `reports/W4/最终项目报告.md`：完整项目总结（含头部区分度、时间外验证、风险阈值与定价、人工复审带、局限性；含 4 张图），同目录有导出的 `.pdf`
+- `reports/W4/W4_周报_2026-09-27.md`：W4 周报
 - 演示 PPT：`outputs/W4/信贷违约模型与审批线_W4汇报.pdf`（15 页，可编辑的 pptx 在交付包里）

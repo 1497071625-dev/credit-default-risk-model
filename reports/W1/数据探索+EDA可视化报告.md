@@ -163,4 +163,4 @@ grade A→G 违约率从 6% 单调升到近 50%——这是报告里能直接讲
 - 报告（txt）：`outputs/W1/data_quality_report.txt`（数据质量检查）、`outputs/W1/outlier_report.txt`（异常值检测）
 - 图（EDA，6 张）：`outputs/W1/eda_target_distribution.png`、`eda_numeric_distributions.png`、`eda_compare_default.png`、`eda_grade_default_rate.png`、`eda_corr_heatmap.png`、`eda_income_log_compare.png`
 - 图（异常值，2 张）：`outputs/W1/outlier_boxplot.png`、`outputs/W1/outlier_tail.png`
-- 环境：`reports/环境配置.md`
+- 环境：`reports/W1/环境配置.md`

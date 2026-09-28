@@ -34,7 +34,7 @@ outputs/W4/test_predictions.csv
 outputs/W4/test_predictions_calibrated.csv
 reports/最终项目报告_1.25行距.docx
 # 交付版二进制：仓库留 md 源稿与可预览的 PDF，docx/pptx 在交付包里
-reports/*.docx
+reports/**/*.docx
 outputs/W4/*.pptx
 
 # 内部工具与自用笔记（不进公开仓库）
