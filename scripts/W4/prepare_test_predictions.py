@@ -1,3 +1,4 @@
+# 本脚本的初稿与重构借助 AI 编码工具（OpenAI Codex 桌面版 26.915.31945 / codex-cli 0.155.0-alpha.9.2）生成；处理逻辑、参数口径与验收标准由本人确定，输出经本人逐项核对。
 """
 prepare_test_predictions.py - 生成测试集预测概率（供 Streamlit 阈值模拟器使用）
 项目：信贷违约预测模型
