@@ -20,7 +20,7 @@ credit-default-risk-model/
 ├── data/         原始数据与清洗、特征工程产物（体积大，未入库，按「数据集」一节自行下载）
 ├── notebooks/    main_pipeline.ipynb：一键复现全流程（W1–W4，读出产物，几分钟跑完）
 ├── outputs/      脚本产物（W1 清洗与 EDA / W2 特征与基线 / W3 优化与 SHAP / W4 最终评估、决策分析、仪表板）
-├── reports/      项目文档（环境配置、数据探索、特征工程、模型评估、模型优化、最终报告，以及 W1–W4 周报；md 为源稿，docx 为交付版）
+├── reports/      项目文档（环境配置、数据探索、特征工程、模型评估、模型优化、最终报告，以及 W1–W4 周报；仓库留 md 源稿，docx 交付版在交付包里）
 ├── scripts/      可执行脚本（scripts/W1–W4，按下文顺序运行）
 ├── README.md     本文件
 └── requirements.txt
@@ -144,7 +144,7 @@ Notebook 优先读取各阶段已生成的中间产物（快路径，约 1 分�
 .venv/bin/python scripts/W4/build_main_pipeline.py
 ```
 
-> 报告与周报的 docx 由同名 md 生成（周报 `--profile weekly`，报告 `--profile final8`，依赖 python-docx），演示 PPT 由 SVG 源导出（依赖 python-pptx）；生成脚本与 PPT 工程留在开发环境，不随交付包发送，包内直接给成品 `reports/*.docx` 与 `outputs/W4/*.pptx`。
+> 报告与周报的 docx 由同名 md 生成（周报 `--profile weekly`，报告 `--profile final8`，依赖 python-docx），演示 PPT 由 SVG 源导出（依赖 python-pptx）；生成脚本与 PPT 工程留在开发环境。仓库只留 md 源稿与能直接预览的 `outputs/W4/*.pdf`，docx 与 pptx 是发出去的交付版，不入库。
 
 也可以直接跑整合版 Notebook：`notebooks/main_pipeline.ipynb`（快速路径读 `data/` 与 `outputs/` 已有产物，几分钟出结果）。
 
@@ -164,10 +164,10 @@ Notebook 优先读取各阶段已生成的中间产物（快路径，约 1 分�
 
 | 交付物 | 文件 | 要求 |
 |---|---|---|
-| 最终项目报告 | `reports/最终项目报告.docx`（md 源同名） | 10–15 页，含业务建议（放贷线与差异化定价）与 4 张图（实测 14 页） |
+| 最终项目报告 | `reports/最终项目报告.md`（交付版 docx 同名） | 10–15 页，含业务建议（放贷线与差异化定价）与 4 张图（实测 14 页） |
 | W4 周报 | `reports/W4_周报_2026-09-27.docx` | 详细总结版，含 4 张图（放贷方案①② 各一节），单独发 |
 | 业务仪表板 | `outputs/W4/dashboard.html`（离线单文件）｜`scripts/W4/app_dashboard.py`（Streamlit） | Plotly/Dash 或 Streamlit |
-| 项目汇报演示 | `outputs/W4/信贷违约模型与审批线_W4汇报.pptx` / `.pdf` | presentation.pptx，10–15 页 |
+| 项目汇报演示 | `outputs/W4/信贷违约模型与审批线_W4汇报.pdf`（可编辑 pptx 在交付包） | presentation.pptx，10–15 页 |
 | 代码 | `scripts/W1–W4/` + `notebooks/main_pipeline.ipynb` | 五个规定脚本 + 全流程 Notebook |
 | 图表产物 | `outputs/W4/*.png`、`*.csv` | EDA / ROC / PR / 混淆矩阵 / 学习曲线 / 校准 / 敏感性 |
 
@@ -179,5 +179,5 @@ Notebook 优先读取各阶段已生成的中间产物（快路径，约 1 分�
 - `reports/模型评估报告.md`：三模型基线对比与业务解读
 - `reports/模型优化报告.md`：调参、K 折交叉验证、投票/堆叠集成与 SHAP 解释
 - `reports/最终项目报告.md`：完整项目总结（含头部区分度、时间外验证、风险阈值与定价、人工复审带、局限性；含 4 张图，导出 15 页）
-- 周报：`reports/W1_周报_2026-09-07.md`、`W2_周报_2026-09-14.docx`、`W3_周报_2026-09-21.md`、`W4_周报_2026-09-27.md`（W1/W3/W4 附 `.docx`，W2 只有 `.docx`）
-- 演示 PPT：`outputs/W4/信贷违约模型与审批线_W4汇报.pptx`（15 页，附同名 `.pdf`）
+- 周报：`reports/W1_周报_2026-09-07.md`、`W3_周报_2026-09-21.md`、`W4_周报_2026-09-27.md`，以及 `W2_周报_2026-09-14.docx`（W2 当时只出了 docx，没有 md 源稿）
+- 演示 PPT：`outputs/W4/信贷违约模型与审批线_W4汇报.pdf`（15 页，可编辑的 pptx 在交付包里）
