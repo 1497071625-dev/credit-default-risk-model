@@ -165,7 +165,7 @@ Notebook 优先读取各阶段已生成的中间产物（快路径，约 1 分�
 | 交付物 | 文件 | 要求 |
 |---|---|---|
 | 最终项目报告 | `reports/最终项目报告.md`（交付版 docx 同名） | 10–15 页，含业务建议（放贷线与差异化定价）与 4 张图（实测 14 页） |
-| W4 周报 | `reports/W4_周报_2026-09-27.docx` | 详细总结版，含 4 张图（放贷方案①② 各一节），单独发 |
+| W4 周报 | `reports/W4_周报_2026-09-27.md`（交付版 docx 同名） | 详细总结版，含 4 张图（放贷方案①② 各一节），单独发 |
 | 业务仪表板 | `outputs/W4/dashboard.html`（离线单文件）｜`scripts/W4/app_dashboard.py`（Streamlit） | Plotly/Dash 或 Streamlit |
 | 项目汇报演示 | `outputs/W4/信贷违约模型与审批线_W4汇报.pdf`（可编辑 pptx 在交付包） | presentation.pptx，10–15 页 |
 | 代码 | `scripts/W1–W4/` + `notebooks/main_pipeline.ipynb` | 五个规定脚本 + 全流程 Notebook |
