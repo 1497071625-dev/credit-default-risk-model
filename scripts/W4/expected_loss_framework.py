@@ -127,7 +127,9 @@ for label, v in calibers:
         rows.append({
             "收益口径": label,
             "回收率": rec,
-            "隐含概率阈值(中位)": float(np.median(p_star[j])),
+            # 这批数据只有 3 年期、5 年期两种贷款，隐含阈值按期限各列一列（中位数在该期限内取）
+            "隐含阈值 3 年": float(np.median(p_star[j][T == 3])),
+            "隐含阈值 5 年": float(np.median(p_star[j][T == 5])),
             "拒绝率": float(reject.mean()),
             "拦截率": float(y[reject].sum() / y.sum()),
             "被拒者精确率": float(y[reject].mean()) if reject.any() else np.nan,

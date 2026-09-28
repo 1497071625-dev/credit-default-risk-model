@@ -11,14 +11,30 @@ __pycache__/
 # IDE
 .idea/
 
-# 原始数据与大体积中间产物（均可由 scripts/ 重新生成）
+# 原始数据与大体积中间产物（可由 scripts/ 重新生成，约 1 GB，不入库）
 data/
 
-# 脚本运行产物（均可由 scripts/ 重新生成）
-outputs/
-
-# 运行缓存（验证集预测、Bootstrap 结果等，不进交付包）
+# 运行缓存（验证集预测、Bootstrap 结果等）
 .cache/
 
 # 其他
 *.log
+
+# ---- 内部文件：挂在目录里但不进仓库 ----
+AGENTS.md
+实习生约定_记忆.md
+数据分析线上实习项目：信贷违约预测模型.pdf
+违约贷款数据集_数据集-阿里云天池.pdf
+阿里实习个人4周计划 王子安.xlsx
+
+# ---- 旧版留档、草稿与可再生成的中间数据（仓库只留结论产物）----
+outputs/W4/archive/
+outputs/W4/ppt_文案.md
+outputs/W4/test_predictions.csv
+outputs/W4/test_predictions_calibrated.csv
+reports/最终项目报告_1.25行距.docx
+
+# 内部工具与自用笔记（不进公开仓库）
+scripts/tools/
+notes/
+交付说明.md

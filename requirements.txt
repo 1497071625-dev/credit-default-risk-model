@@ -11,3 +11,10 @@ pypdf==6.16.2
 lightgbm
 shap
 streamlit>=1.63
+# 主流程补充依赖
+scipy==1.18.1
+optuna==5.0.0
+Pillow==12.3.0
+# 交付物导出（报告/周报 docx、汇报 PPT）
+python-docx==1.2.0
+python-pptx==1.0.2

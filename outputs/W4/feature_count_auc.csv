@@ -1,0 +1,10 @@
+﻿n_features,train_auc,val_auc,seconds,added
+3,0.6974,0.7005,2.3,"subGrade_enc, interestRate, grade_enc"
+5,0.7097,0.7074,2.4,"term, grade_dti_inter"
+8,0.7198,0.7127,2.7,"installment_income_ratio, fico_avg, dti"
+10,0.7221,0.7131,2.7,"interest_loan_inter, installment_log"
+15,0.7317,0.7205,3.2,"annualIncome_log, homeOwnership_1, loanAmnt_log, revolBal_log, regionCode_enc"
+20,0.7385,0.7253,4.0,"revolUtil, n14, employmentLength_enc, credit_history_years, totalAcc"
+25,0.7414,0.7284,4.4,"n3, n2, n8, n6, n9"
+30,0.7419,0.7284,4.6,"n5, n10, openAcc, n7, n1"
+38,0.7432,0.7294,5.2,"n4, verificationStatus_2, n0, initialListStatus, delinquency_2years, pubRec, verificationStatus_1, pubRecBankruptcies"

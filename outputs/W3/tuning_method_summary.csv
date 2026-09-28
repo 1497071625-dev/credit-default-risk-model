@@ -1,0 +1,6 @@
+experiment,method,budget,best_cv_auc,mean_cv_auc,trial_reached_best,total_seconds,best_params,mean_gap_vs_random
+exp1,Grid,24,0.721,0.7173,3,215.7,"{'num_leaves': 31, 'learning_rate': 0.05, 'n_estimators': 300, 'colsample_bytree': 0.7}",0.0008
+exp1,Random,24,0.7209,0.7165,19,257.5,"{'num_leaves': 31, 'learning_rate': 0.05, 'n_estimators': 200, 'colsample_bytree': 1.0}",0.0
+exp1,Bayesian(TPE),24,0.721,0.7192,13,216.1,"{'num_leaves': 31, 'learning_rate': 0.05, 'n_estimators': 300, 'colsample_bytree': 0.7}",0.0027
+exp2,Random,30,0.7219,0.7186,30,279.9,"{'num_leaves': 110, 'max_depth': 5, 'learning_rate': 0.06495399003319909, 'n_estimators': 250, 'min_child_samples': 48, 'colsample_bytree': 0.5687604720729966}",0.0
+exp2,Bayesian(TPE),30,0.7219,0.7201,27,378.2,"{'num_leaves': 50, 'max_depth': 10, 'learning_rate': 0.02386510541432804, 'n_estimators': 400, 'min_child_samples': 47, 'colsample_bytree': 0.5841940416374563}",0.0015

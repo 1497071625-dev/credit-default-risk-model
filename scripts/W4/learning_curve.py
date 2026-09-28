@@ -53,9 +53,14 @@ sizes = [10_000, 25_000, 50_000, 100_000, 200_000, 400_000, len(X_train)]
 train_auc, val_auc = [], []
 t0 = time.time()
 for i, n in enumerate(sizes, 1):
-    # 固定随机种子抽子样本（保证每次都是同一批人的前 n 个）
-    idx = np.random.default_rng(42).choice(len(X_train), n, replace=False)
-    Xs, ys = X_train.iloc[idx], y_train.iloc[idx]
+    # 固定随机种子抽子样本（保证每次都是同一批人的前 n 个）；
+    # n 取满时直接用全量训练集，且不打乱行序 —— 这样末点与最终模型完全一致，
+    # 避免 subsample=0.8 在乱序数据上抽出不同子集、末点与表里的 AUC 差 0.0002。
+    if n >= len(X_train):
+        Xs, ys = X_train, y_train
+    else:
+        idx = np.random.default_rng(42).choice(len(X_train), n, replace=False)
+        Xs, ys = X_train.iloc[idx], y_train.iloc[idx]
 
     model = LGBMClassifier(**best_params, scale_pos_weight=scale_pos,
                            verbosity=-1, random_state=42, n_jobs=-1)

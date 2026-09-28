@@ -1,0 +1,7 @@
+model,method,budget,best_cv_auc,mean_cv_auc,trial_reached_best,total_seconds,best_params
+XGBoost,Grid,24,0.7217,0.7186,7,92.2,"{'max_depth': 4, 'learning_rate': 0.1, 'n_estimators': 300, 'colsample_bytree': 0.7}"
+XGBoost,Random,24,0.7216,0.7177,23,99.5,"{'max_depth': 4, 'learning_rate': 0.1, 'n_estimators': 200, 'colsample_bytree': 1.0}"
+XGBoost,Bayesian(TPE),24,0.7217,0.7198,19,82.9,"{'max_depth': 4, 'learning_rate': 0.1, 'n_estimators': 300, 'colsample_bytree': 0.7}"
+LightGBM,Grid,24,0.721,0.7173,3,231.0,"{'num_leaves': 31, 'learning_rate': 0.05, 'n_estimators': 300, 'colsample_bytree': 0.7}"
+LightGBM,Random,24,0.7209,0.7165,19,264.6,"{'num_leaves': 31, 'learning_rate': 0.05, 'n_estimators': 200, 'colsample_bytree': 1.0}"
+LightGBM,Bayesian(TPE),24,0.721,0.7192,13,216.4,"{'num_leaves': 31, 'learning_rate': 0.05, 'n_estimators': 300, 'colsample_bytree': 0.7}"
